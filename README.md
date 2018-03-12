@@ -1,4 +1,4 @@
-[[#]] reconnection
+# Magnetic Reconnection 
 
   * for 2d reconnection:
       python reconnect_2d.py s1e3z.ideal.np 0 100 3 0.05 &>log.s3e5z &
