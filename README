@@ -1,0 +1,30 @@
+
+  for 2d reconnection:
+    python reconnect_2d.py s1e3z.ideal.np 0 100 3 0.05 &>log.s3e5z &
+    python plot_2dcs.py s1e3z.ideal.np  0 100 >& log.s1e5z.ideal &
+    use stream_max() and the following script to get phimax-ts=te.p
+from reconnect_2d import get_path
+from reconnect_2d import loadpickle
+from reconnect_2d import stream_max
+import reconnect_2d
+%matplotlib inline
+
+targlist = ['s1e4z','s1.5e4z','s3e4z','s1e5z','s3e5z','s1e6z','s1e5z.ideal.np'] #,'s1e5z.ideal'] #,'s1e4x64z128','s1e4x128z256']
+clist = ['b','g','r','k','y','c']
+cnt = 0
+for targ in targlist[-1:]:
+    datapath=get_path(targ)
+    ts,te,nz=0,100,1
+    
+    tt,xx,zz,phimax=stream_max(datapath,ts,te,nz,dump=True)
+    dx=xx[1]-xx[0];dt=tt[1]-tt[0]
+    avg_dphidt=np.zeros(phimax.shape[0]-1)
+    for iz in np.arange(nz):
+      #plt.plot(np.diff(phimax[:,iz])/dt,'-b',linewidth=iz*0.1)
+      avg_dphidt += np.diff(phimax[:,iz])/dt
+    plt.plot(avg_dphidt/float(nz),'-'+clist[cnt])
+    cnt +=1
+
+plt.xlim(0,100)
+plt.ylim(-0.01,0.025)
+

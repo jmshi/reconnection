@@ -1,0 +1,22 @@
+jsheet =  0 51800 self-des @ Dt =  0.100530964915 nself,nmerg =  2 0
+rank,size,nself,nmerg,time =  0 51800 2 0 0.100530964915
+jsheet =  1 31043  merged @Dt =  0.0973893722613 nself,nmerg =  1 1
+rank,size,nself,nmerg,time =  1 31043 1 1 0.0973893722613
+jsheet =  2 30238 self-des @ Dt =  0.116238928183 nself,nmerg =  2 0
+rank,size,nself,nmerg,time =  2 30238 2 0 0.116238928183
+jsheet =  3 23879 self-des @ Dt =  0.103672557568 nself,nmerg =  2 1
+rank,size,nself,nmerg,time =  3 23879 2 1 0.103672557568
+jsheet =  4 15476 self-des @ Dt =  0.125663706144 nself,nmerg =  2 0
+rank,size,nself,nmerg,time =  4 15476 2 0 0.125663706144
+jsheet =  5 8461 self-des @ Dt =  0.0973893722613 nself,nmerg =  2 0
+rank,size,nself,nmerg,time =  5 8461 2 0 0.0973893722613
+[warning] rank,size,nself,nmerg,time =  6 6624 0 1 0.103672557568
+rank,size,nself,nmerg,time =  6 6624 0 1 0.103672557568
+jsheet =  7 6053 self-des @ Dt =  0.241902634326 nself,nmerg =  2 0
+rank,size,nself,nmerg,time =  7 6053 2 0 0.241902634326
+jsheet =  8 5787 self-des @ Dt =  0.28902652413 nself,nmerg =  2 0
+rank,size,nself,nmerg,time =  8 5787 2 0 0.28902652413
+jsheet =  9 5178 self-des @ Dt =  0.157079632679 nself,nmerg =  2 0
+rank,size,nself,nmerg,time =  9 5178 2 0 0.157079632679
+jsheet =  10 5126 self-des @ Dt =  0.100530964915 nself,nmerg =  2 0
+rank,size,nself,nmerg,time =  10 5126 2 0 0.100530964915

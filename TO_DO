@@ -1,0 +1,11 @@
+
+
+  1) update the main.py script with the finding current sheets in 1000 cubed.. notebook
+
+  2) test it with r64,r128,and r256 data
+
+  3) try to arrange the processed jlist data
+
+  4) try to get basic jlist properties for each runs
+
+  5) comparison among diff runs

@@ -1,0 +1,81 @@
+time =  2481.862
+face_dimensions =  [65, 257, 257]
+-5.000000e-01 -2.000000e+00 -2.000000e+00
+box_origin =  [-0.5, -2.0, -2.0]
+1.562500e-02 1.562500e-02 1.562500e-02
+grid_spacing =  [0.015625, 0.015625, 0.015625]
+cell_dimensions =  [256 256  64]  num_cells =  4194304
+SCALARS
+start loading scalars !! 
+loading array_name =  density
+is,ie =  297 16777513
+data[density].shape=  (256, 256, 64)
+VECTORS
+VECTORS
+start loading vectors !! 
+loading array_name =  momentum
+VECTORS
+VECTORS
+start loading vectors !! 
+loading array_name =  cell_centered_B
+time cost for  (4, 4, 4)  times refinement:  217.767787933  seconds
+now the input data shape:  (1024, 1024, 256) (1024, 1024, 256) (1024, 1024, 256) (1024, 1024, 256)
+============ start to find current sheet ===============
+after  7  iterations: 
+find threshold current sheet magnitude
+jth^2 =  103.349130014  0.25*qdiss_tot =  773212449.122  actual qdiss =  775274694.028
+time cost for the estimate jth:  3.5076880455  seconds
+identified  416  current sheets in total!
+time cost for the identify features:  3.79857301712  seconds
+time cost for construct jlist:  517.159740925  seconds
+time cost for sort jlist:  0.000247955322266  seconds
+the top 5 sheets in size:  [546417, 509180, 435358, 238097, 184137]
+time cost for pickle dump:  121.389607191  seconds
+============ start to find null points ===============
+time cost for constructing location:  241.534977913  seconds
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:217: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:272: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+main.py:327: RuntimeWarning: invalid value encountered in divide
+  sol2 = -(a2+b2*sol1)/(c2+d2*sol1)
+time cost for reduction [step1]:  1003.4604938  seconds
+time cost for reduction [step2]:  7.47199988365  seconds
+identified  6363981  candidate cells after reduction
+time cost for Bx=By=0:  181.112253189  seconds
+193863  cells left
+time cost for By=Bz=0:  741.52909708  seconds
+106592  cells left
+time cost for the Bx=Bz=0:  227.694767237  seconds
+69980  cells left
+identified  69980  magnetic null points
