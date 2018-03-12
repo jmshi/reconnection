@@ -89,12 +89,17 @@ ENV/
 .ropeproject
 
 # project specific
+cmd.history
+input*
+*.out
+README
 log*
 out*
 *.tab
 *.png
 Unstra*
 HGB*
+batch*
 download/
 *.dat
 track000/
@@ -110,6 +115,7 @@ d3*/
 TO_DO*
 *yt*
 *binary_orbit*
+advection*
 *drif_diffuse*
 *embedded_d3*
 design_shearing_box*
