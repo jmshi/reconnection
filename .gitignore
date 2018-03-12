@@ -116,5 +116,18 @@ debug*
 identify_*
 cartesian*
 core*
-
-
+Best*
+Test_*
+corefinding_simple_test.ipynb
+magnetic shearing box test.ipynb
+shear_wave_test_in_2d_shearing_sheet.ipynb
+shear_wave_test_in_2d_shearing_sheet_remote.ipynb
+table_test.txt
+test_athena4_read and current sheet finding with floodfill and feature finding.ipynb
+test_athena4_read.ipynb
+test_bisect.py
+test_floodfill.py
+test ideal unstratified znf box.ipynb
+test_srcterm_with_2dMRI.ipynb
+test_viscosity_resistivity.ipynb
+test_yt_volume_rendering.ipynb
