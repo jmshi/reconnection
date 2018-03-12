@@ -87,3 +87,34 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# project specific
+log*
+*.tab
+*.png
+Unstra*
+HGB*
+download/
+*.dat
+track000/
+*.txt
+*.BK*
+dataset*/
+data*/
+input*/
+d3*/
+*.OLD
+*.bk
+*.mp4
+TO_DO*
+*yt*
+*binary_orbit*
+*drif_diffuse*
+*embedded_d3*
+design_shearing_box*
+debug*
+identify_*
+cartesian*
+core*
+
+

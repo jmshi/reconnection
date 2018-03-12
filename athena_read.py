@@ -205,7 +205,8 @@ def vtk(filename):
 
 #=======================================================================================
 
-def athdf(filename, data=None, quantities=None):
+def athdf(filename, data=None, quantities=None, level=0, subsample=False,
+    fast_restrict=False, vol_func=None, vol_params=None):
   """Read .athdf files and populate dict of arrays of data."""
 
   # Python module for reading hdf5 files
@@ -214,84 +215,267 @@ def athdf(filename, data=None, quantities=None):
   # Open file
   with h5py.File(filename, 'r') as f:
 
+    time = f.attrs['Time']
+    print "time = ", time
+    # Set volume function for preset coordinates if needed
+    if not subsample and not fast_restrict and vol_func is None:
+      coord = f.attrs['Coordinates']
+      if coord == 'cartesian' or coord == 'minkowski' or coord == 'tilted' \
+          or coord == 'sinusoidal':
+        x1_rat = f.attrs['RootGridX1'][2]
+        x2_rat = f.attrs['RootGridX2'][2]
+        x3_rat = f.attrs['RootGridX3'][2]
+        if (x1_rat == 1.0 and x2_rat == 1.0 and x3_rat == 1.0):
+          fast_restrict = True
+        else:
+          vol_func = lambda xm,xp,ym,yp,zm,zp: (xp-xm) * (yp-ym) * (zp-zm)
+      elif coord == 'cylindrical':
+        vol_func = \
+            lambda rm,rp,phim,phip,zm,zp: 0.5*(rp**2-rm**2) * (phip-phim) * (zp-zm)
+      elif coord == 'spherical_polar' or coord == 'schwarzschild':
+        vol_func = lambda rm,rp,thetam,thetap,phim,phip: \
+            1.0/3.0*(rp**3-rm**3) * abs(np.cos(thetam)-np.cos(thetap)) * (phip-phim)
+      elif coord == 'kerr-schild':
+        def vol_func(rm,rp,thetam,thetap,phim,phip):
+          a = vol_params[0]
+          cm = np.cos(thetam)
+          cp = np.cos(thetap)
+          return 1.0/3.0*(rp**3-rm**3) * abs(cm-cp) * (phip-phim) \
+              * (rm**2+rm*rp+rp**2 + a**2*(cm**2+cm*cp+cp**2))
+      else:
+        raise AthenaError('Coordinates not recognized')
+
+    # Extract size information
+    block_size = f.attrs['MeshBlockSize']
+    root_grid_size = f.attrs['RootGridSize']
+    nx1 = root_grid_size[0] * 2**level
+    nx2 = root_grid_size[1] * 2**level if root_grid_size[1] > 1 else 1
+    nx3 = root_grid_size[2] * 2**level if root_grid_size[2] > 1 else 1
+    lx1 = nx1 / block_size[0]
+    lx2 = nx2 / block_size[1]
+    lx3 = nx3 / block_size[2]
+    if nx3 > 1:
+      dim = 3
+    elif nx2 > 1:
+      dim = 2
+    else:
+      dim = 1
+
+    # Check that subsampling and/or fast restriction will work if needed
+    max_level = f.attrs['MaxLevel']
+    if subsample or fast_restrict:
+      max_restrict_factor = 2**(max_level-level)
+      for current_block_size in block_size[:dim]:
+        if current_block_size % max_restrict_factor != 0:
+          raise AthenaError('Block boundaries at finest level must be cell ' \
+              + 'boundaries at desired level for\nsubsampling or fast restriction to ' \
+              + 'work')
+
     # Create list of all quantities if none given
     if data is not None:
       quantities = data.values()
     elif quantities is None:
-      quantities = f[u'MeshBlock0'].keys()
-      quantities = [q for q in quantities \
-          if q != u'x1f' and q != u'x2f' and q != u'x3f']
+      quantities = f.attrs['VariableNames'][:]
+    quantities = [str(q) for q in quantities \
+        if q != 'x1f' and q != 'x2f' and q != 'x3f']
 
-    # Get block count, dimensions, and sizes
-    num_blocks = len(f.keys())
-    dims = 0
-    block_size = []
-    coords = [u'x1f',u'x2f',u'x3f']
-    for key in coords:
-      if key in f[u'MeshBlock0'].keys():
-        dims += 1
-        block_size.append(len(f[u'MeshBlock0'][key][:]) - 1)
-    coords = coords[:dims]
-
-    # Order blocks
-    edges = np.empty((num_blocks,dims))
-    for block_num,block_name in zip(range(num_blocks),f.keys()):
-      for dim,coord in zip(range(dims),coords):
-        edges[block_num,dim] = f[block_name][coord][0]
-    edges_unique = []
-    for dim in range(dims):
-      edges_unique.append(set(edges[:,dim]))
-    indices = np.empty((num_blocks,3,2), dtype=int)
-    for block_num in range(num_blocks):
-      for dim in range(dims):
-        num_prior = sum(edge < edges[block_num,dim] for edge in edges_unique[dim])
-        indices[block_num,dim,0] = num_prior * block_size[dim]
-        indices[block_num,dim,1] = (num_prior+1) * block_size[dim]
-      for dim in range(dims,3):
-        indices[block_num,dim,0] = 0
-        indices[block_num,dim,1] = 1
-
-    # Prepare arrays if needed
-    nx1 = block_size[0] * len(edges_unique[0])
-    nx2 = block_size[1] * len(edges_unique[1]) if dims >= 2 else 1
-    nx3 = block_size[2] * len(edges_unique[2]) if dims >= 3 else 1
-    if data is None:
+    # Prepare arrays for data and bookkeeping
+    if data is not None:
+      for q in quantities:
+        data[q].fill(0.0)
+    else:
       data = {}
       for q in quantities:
-        data[q] = np.empty((nx3,nx2,nx1))
-    data[u'x1f'] = np.empty(nx1+1)
-    if dims >= 2:
-      data[u'x2f'] = np.empty(nx2+1)
-    if dims >= 3:
-      data[u'x3f'] = np.empty(nx3+1)
+        data[q] = np.zeros((nx3,nx2,nx1))
+    if not subsample and not fast_restrict and max_level > level:
+      restricted_data = np.zeros((lx3,lx2,lx1), dtype=bool)
 
-    # Read interface data
-    for n,block_name in zip(range(num_blocks),f.keys()):
-      for dim,coord in zip(range(dims),coords):
-        need_interfaces = True
-        for dim_other in range(dims):
-          if dim_other == dim:
-            continue
-          if indices[n,dim_other,0] != 0:
-            need_interfaces = False
-        if not need_interfaces:
-          continue
-        data[coord][indices[n,dim,0]:indices[n,dim,1]] = f[block_name][coord][:-1]
-        if indices[n,dim,1] == block_size[dim] * len(edges_unique[dim]):
-          data[coord][indices[n,dim,1]] = f[block_name][coord][-1]
+    # Populate arrays with interface locations
+    for d in range(1,4):
+      nx = (nx1,nx2,nx3)[d-1]
+      xmin = f.attrs['RootGridX'+repr(d)][0]
+      xmax = f.attrs['RootGridX'+repr(d)][1]
+      xrat_root = f.attrs['RootGridX'+repr(d)][2]
+      if (xrat_root == 1.0):
+        data['x'+repr(d)+'f'] = np.linspace(xmin, xmax, nx+1)
+      else:
+        xrat = xrat_root ** (1.0 / 2**level)
+        data['x'+repr(d)+'f'] = \
+            xmin + (1.0-xrat**np.arange(nx+1)) / (1.0-xrat**nx) * (xmax-xmin)
 
-    # Read value data
-    for n,block_name in zip(range(num_blocks),f.keys()):
-      kl = indices[n,2,0]
-      ku = indices[n,2,1]
-      jl = indices[n,1,0]
-      ju = indices[n,1,1]
-      il = indices[n,0,0]
-      iu = indices[n,0,1]
-      for q in quantities:
-        data[q][kl:ku,jl:ju,il:iu] = f[block_name][q][:]
-  return data
+    # Get metadata describing file layout
+    num_blocks = f.attrs['NumMeshBlocks']
+    dataset_names = f.attrs['DatasetNames'][:]
+    dataset_sizes = f.attrs['NumVariables'][:]
+    dataset_sizes_cumulative = np.cumsum(dataset_sizes)
+    variable_names = f.attrs['VariableNames'][:]
+    levels = f['Levels'][:]
+    logical_locations = f['LogicalLocations'][:]
+    quantity_datasets = []
+    quantity_indices = []
+    for q in quantities:
+      var_num = np.where(variable_names == q)[0][0]
+      dataset_num = np.where(dataset_sizes_cumulative > var_num)[0][0]
+      if dataset_num == 0:
+        dataset_index = var_num
+      else:
+        dataset_index = var_num - dataset_sizes_cumulative[dataset_num-1]
+      quantity_datasets.append(dataset_names[dataset_num])
+      quantity_indices.append(dataset_index)
 
+    # Go through blocks in data file
+    for block_num in range(num_blocks):
+
+      # Extract location information
+      block_level = levels[block_num]
+      block_location = logical_locations[block_num,:]
+
+      # Prolongate coarse data and copy same-level data
+      if block_level <= level:
+
+        # Calculate scale (number of copies per dimension)
+        s = 2**(level-block_level)
+
+        # Calculate fine-level begin indices
+        il = block_location[0] * block_size[0] * s
+        jl = block_location[1] * block_size[1] * s if dim >= 2 else 0
+        kl = block_location[2] * block_size[2] * s if dim == 3 else 0
+
+        # Calculate fine-level end indices
+        iu = il + block_size[0] * s
+        ju = jl + block_size[1] * s if dim >= 2 else 1
+        ku = kl + block_size[2] * s if dim == 3 else 1
+
+        # Calculate fine-level offsets
+        io_vals = range(s)
+        jo_vals = range(s) if dim >= 2 else (0,)
+        ko_vals = range(s) if dim == 3 else (0,)
+
+        # Assign values
+        for q,dataset,index in zip(quantities,quantity_datasets,quantity_indices):
+          for ko in ko_vals:
+            for jo in jo_vals:
+              for io in io_vals:
+                data[q][kl+ko:ku+ko:s,jl+jo:ju+jo:s,il+io:iu+io:s] \
+                    = f[dataset][index,block_num,:]
+
+      # Restrict fine data
+      else:
+
+        # Apply subsampling
+        if subsample:
+
+          # Calculate scale (fine-level stride)
+          s = 2**(block_level-level)
+
+          # Calculate coarse-level begin indices
+          il = block_location[0] * block_size[0] / s
+          jl = block_location[1] * block_size[1] / s if dim >= 2 else 0
+          kl = block_location[2] * block_size[2] / s if dim == 3 else 0
+
+          # Calculate coarse-level end indices
+          iu = il + block_size[0] / s
+          ju = jl + block_size[1] / s if dim >= 2 else 1
+          ku = kl + block_size[2] / s if dim == 3 else 1
+
+          # Calculate fine-level offset (nearest cell at or below center)
+          o = s/2 - 1
+
+          # Assign values
+          for q,dataset,index in zip(quantities,quantity_datasets,quantity_indices):
+            data[q][kl:ku,jl:ju,il:iu] = f[dataset][index,block_num,o::s,o::s,o::s]
+
+        # Apply fast (uniform Cartesian) restriction
+        elif fast_restrict:
+
+          # Calculate scale (fine-level stride)
+          s = 2**(block_level-level)
+
+          # Calculate coarse-level begin indices
+          il = block_location[0] * block_size[0] / s
+          jl = block_location[1] * block_size[1] / s if dim >= 2 else 0
+          kl = block_location[2] * block_size[2] / s if dim == 3 else 0
+
+          # Calculate coarse-level end indices
+          iu = il + block_size[0] / s
+          ju = jl + block_size[1] / s if dim >= 2 else 1
+          ku = kl + block_size[2] / s if dim == 3 else 1
+
+          # Calculate fine-level offsets
+          io_vals = range(s)
+          jo_vals = range(s) if dim >= 2 else (0,)
+          ko_vals = range(s) if dim == 3 else (0,)
+
+          # Assign values
+          for q,dataset,index in zip(quantities,quantity_datasets,quantity_indices):
+            for ko in ko_vals:
+              for jo in jo_vals:
+                for io in io_vals:
+                  data[q][kl:ku,jl:ju,il:iu] \
+                      += f[dataset][index,block_num,ko::s,jo::s,io::s]
+            data[q][kl:ku,jl:ju,il:iu] /= s**dim
+
+        # Apply exact (volume-weighted) restriction
+        else:
+
+          # Calculate scale
+          s = 2**(block_level-level)
+
+          # Calculate fine-level indices
+          ir_vals = np.arange(block_size[0])
+          jr_vals = np.arange(block_size[1])
+          kr_vals = np.arange(block_size[2])
+
+          # Calculate coarse-level indices
+          i_vals = (ir_vals + block_location[0] * block_size[0]) / s
+          j_vals = (jr_vals + block_location[1] * block_size[1]) / s
+          k_vals = (kr_vals + block_location[2] * block_size[2]) / s
+
+          # Accumulate values
+          for k,kr in zip(k_vals,kr_vals):
+            x3m = f['x3f'][block_num,kr]
+            x3p = f['x3f'][block_num,kr+1]
+            for j,jr in zip(j_vals,jr_vals):
+              x2m = f['x2f'][block_num,jr]
+              x2p = f['x2f'][block_num,jr+1]
+              for i,ir in zip(i_vals,ir_vals):
+                x1m = f['x1f'][block_num,ir]
+                x1p = f['x1f'][block_num,ir+1]
+                vol = vol_func(x1m, x1p, x2m, x2p, x3m, x3p)
+                for q,dataset,index in \
+                    zip(quantities,quantity_datasets,quantity_indices):
+                  data[q][k,j,i] += f[dataset][index,block_num,kr,jr,ir] * vol
+          loc1 = block_location[0] / s
+          loc2 = block_location[1] / s
+          loc3 = block_location[2] / s
+          restricted_data[loc3,loc2,loc1] = True
+
+    # Remove volume factors from restricted data
+    if not subsample and not fast_restrict and max_level > level:
+      for loc3 in range(lx3):
+        for loc2 in range(lx2):
+          for loc1 in range(lx1):
+            if restricted_data[loc3,loc2,loc1]:
+              il = loc1 * block_size[0]
+              jl = loc2 * block_size[1]
+              kl = loc3 * block_size[2]
+              iu = il + block_size[0]
+              ju = jl + block_size[1]
+              ku = kl + block_size[2]
+              for k in range(kl,ku):
+                x3m = data['x3f'][k]
+                x3p = data['x3f'][k+1]
+                for j in range(jl,ju):
+                  x2m = data['x2f'][j]
+                  x2p = data['x2f'][j+1]
+                  for i in range(il,iu):
+                    x1m = data['x1f'][i]
+                    x1p = data['x1f'][i+1]
+                    vol = vol_func(x1m, x1p, x2m, x2p, x3m, x3p)
+                    for q in quantities:
+                      data[q][k,j,i] /= vol
+
+  return time,data
 #=======================================================================================
 
 class AthenaError(RuntimeError):
