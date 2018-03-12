@@ -90,6 +90,7 @@ ENV/
 
 # project specific
 log*
+out*
 *.tab
 *.png
 Unstra*
