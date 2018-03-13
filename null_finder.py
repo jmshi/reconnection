@@ -528,7 +528,7 @@ def findNullPoint(bx,by,bz,fname, nproc=0):
   tstart = time.time() 
   # second pass: finding intersection of By=Bz=0
   candidate_list = cell
-  mask_list = p.map(intersect_bxby, candidate_list)
+  mask_list = p.map(intersect_bybz, candidate_list)
   cell = [candidate_list[i] for i in range(len(candidate_list)) if mask_list[i]]
   tend = time.time()
   #for cell_one in cell:
@@ -541,7 +541,7 @@ def findNullPoint(bx,by,bz,fname, nproc=0):
   tstart = time.time() 
   # third pass: finding intersection of Bx=Bz=0
   candidate_list = cell
-  mask_list = p.map(intersect_bxby, candidate_list)
+  mask_list = p.map(intersect_bxbz, candidate_list)
   cell = [candidate_list[i] for i in range(len(candidate_list)) if mask_list[i]]
   tend = time.time()
   #for cell_one in cell:
