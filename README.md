@@ -13,13 +13,13 @@
       use notebook two_dimensional_reconnection.ipynb as examples
 
   ## for 3d reconnection: 
-```python
+
       main*.py  identify all current sheets for given frames
       
       null_finder.py  identify all magnetic null pts for given frames
       
       get_jsheet*.py  extract useful properties of current sheets 
- ```
+
       use mri_current_sheet.ipynb as an user guide for analyzing data
      
   ## for MRI 2d test project: 
