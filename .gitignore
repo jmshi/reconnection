@@ -89,6 +89,8 @@ ENV/
 .ropeproject
 
 # project specific
+basic*
+flowchart/*
 cmd.history
 input*
 *.out
